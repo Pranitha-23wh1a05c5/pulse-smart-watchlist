@@ -623,4 +623,445 @@ The available levels are:
 - Normal
 - High
 
-For e
+For example, a user might want:
+
+```text
+TSLA → Low sensitivity
+KO   → High sensitivity
+```
+
+This means the user can decide that only very large movements in one stock deserve attention while relatively small unusual movements in another stock should be highlighted.
+
+The idea is that "meaningful" is personal rather than identical for every stock.
+
+---
+
+# 18. Live Sparklines
+
+Each watchlist card includes a small live price chart, or sparkline.
+
+The sparkline gives the user a quick visual understanding of the recent direction and movement of the stock without requiring a large chart.
+
+The interface also uses a visual flash/pulse effect when live ticks arrive so the watchlist feels active rather than static.
+
+---
+
+# 19. Automatic Watchlist Sorting
+
+The default sorting method is:
+
+```text
+Attention Score
+```
+
+This means the watchlist prioritizes unusual activity rather than simply sorting alphabetically or by percentage change.
+
+Users can change the sorting method using the sort control.
+
+When only one stock is being watched, the interface explicitly explains that there is nothing to reorder.
+
+---
+
+# 20. Cross-Device and Cross-Session Sync
+
+Pulse does not require a traditional signup system.
+
+There is:
+
+- No email registration
+- No password
+- No traditional account signup
+
+Instead, Pulse generates a memorable watchlist code such as:
+
+```text
+SWIFT-FALCON-42
+```
+
+The code acts as the account key.
+
+The user can enter the same code on another device to access the same:
+
+- Watchlist
+- Settings
+- Investment theses
+- Digest baseline
+
+This provides a simple cross-device persistence model without building a complete authentication system.
+
+---
+
+# 21. Persistence
+
+Pulse stores user state so that the application can remember information between sessions.
+
+The current implementation uses JSON-file persistence.
+
+This keeps the project simple and easy to understand for a demo.
+
+The persistence layer is designed so that it can later be replaced with a database such as PostgreSQL without changing the rest of the application architecture significantly.
+
+---
+
+# 22. Per-User Write Serialization
+
+Pulse also protects user data when multiple requests happen at the same time.
+
+For example, a user might have:
+
+- Two browser tabs open
+- A settings change happening
+- A thesis being saved
+- An LLM request taking several seconds
+
+The application uses a per-user lock so that changes for the same user are processed one at a time in the correct order.
+
+This prevents simultaneous updates from overwriting each other or producing inconsistent user state.
+
+---
+
+# 23. Regression Tests
+
+The backend contains a small dependency-free test suite.
+
+It uses Node's built-in `assert` functionality.
+
+The tests focus on bugs and reasoning-heavy areas that were specifically encountered during development.
+
+To run the tests:
+
+```bash
+cd backend
+node test.js
+```
+
+The tests include checks for issues such as:
+
+- Incorrect keyword matching
+- Incorrect sensitivity multiplier direction
+- Other important behavior in the reasoning-related parts of the application
+
+This is not intended to provide complete application test coverage. It is a focused regression suite for areas where subtle logic errors are most likely.
+
+---
+
+# 24. No Build Step for the Frontend
+
+The frontend is intentionally simple.
+
+It uses:
+
+- HTML
+- CSS
+- Vanilla JavaScript
+
+There is no frontend build step.
+
+The main frontend files are:
+
+```text
+frontend/
+├── index.html
+├── style.css
+└── app.js
+```
+
+This keeps the application easy to run and easy to inspect.
+
+---
+
+# 25. Backend Architecture
+
+The backend contains the main application logic.
+
+Important files include:
+
+```text
+backend/
+├── server.js
+├── marketEngine.js
+├── changeEngine.js
+├── db.js
+├── symbols.js
+├── thesisThemes.js
+└── test.js
+```
+
+## server.js
+
+Provides the REST API and WebSocket wiring.
+
+It connects the frontend to the backend services.
+
+## marketEngine.js
+
+Handles the market feed, including simulated data and data-source reconciliation.
+
+## changeEngine.js
+
+Handles:
+
+- Attention Score
+- Digest calculations
+- Meaningful-change detection
+- Sector insights
+- Related market reasoning
+
+## db.js
+
+Handles persistence of user and watchlist state.
+
+The current implementation uses JSON-file storage.
+
+## symbols.js
+
+Contains the demo symbol catalog and related information such as sector and volatility.
+
+## thesisThemes.js
+
+Contains keyword-theme matching used by the template-based Devil's Advocate system.
+
+Keeping this logic in its own module makes it easier to understand and test independently.
+
+## test.js
+
+Contains the focused regression tests for important reasoning-related behavior.
+
+---
+
+# 26. Project Structure
+
+The complete project is organized approximately like this:
+
+```text
+smart-watchlist/
+│
+├── backend/
+│   ├── server.js
+│   ├── marketEngine.js
+│   ├── changeEngine.js
+│   ├── db.js
+│   ├── symbols.js
+│   ├── thesisThemes.js
+│   └── test.js
+│
+├── frontend/
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
+│
+├── .gitignore
+└── README.md
+```
+
+---
+
+# 27. How the Main Features Work Together
+
+The application can be understood as a sequence:
+
+```text
+Market Data
+     ↓
+Data Quality Checks
+     ↓
+Attention Score
+     ↓
+Plain-English Explanation
+     ↓
+Digest and Sector Insights
+     ↓
+User's Investment Thesis
+     ↓
+Thesis Status
+     ↓
+Devil's Advocate
+```
+
+The important point is that these features are connected.
+
+Pulse is not simply calculating a stock's percentage change.
+
+It considers:
+
+```text
+What happened?
+      +
+Was it unusual?
+      +
+Is the data reliable?
+      +
+Is there a broader sector movement?
+      +
+What did the user believe would happen?
+      +
+Did reality support or contradict that belief?
+```
+
+That combination is the core idea behind the project.
+
+---
+
+# 28. Why Pulse Is Different From a Normal Watchlist
+
+A traditional watchlist focuses mainly on the market:
+
+```text
+What is the price?
+How much did it change?
+What is the chart doing?
+```
+
+Pulse adds another dimension:
+
+```text
+What did I believe?
+What actually happened?
+Did reality agree with me?
+Could I be wrong?
+```
+
+This makes the product less about constantly watching stock prices and more about recognizing meaningful changes and challenging the user's assumptions.
+
+The goal is not to tell the user what to buy or sell.
+
+The goal is to help the user notice when something important happened and to encourage them to question their own investment thesis.
+
+---
+
+# 29. Scaling the Application
+
+The current implementation is designed for a demo and small number of users, but the architecture leaves clear paths for scaling.
+
+## Persistence
+
+The JSON storage can eventually be replaced with PostgreSQL.
+
+Possible tables include:
+
+```text
+users
+watchlist_items
+settings
+```
+
+The existing persistence interface can remain largely the same.
+
+## Market Data
+
+Currently, connected browsers can share the same in-process market engine.
+
+At larger scale, Redis or a similar messaging system could be used so that multiple backend instances can share market-data subscriptions and computations.
+
+## WebSocket Fan-Out
+
+At demo scale, broadcasting updates to connected clients is sufficient.
+
+At larger scale, updates can be filtered server-side so each client receives only the symbols in its own watchlist.
+
+## Attention Scoring
+
+The Attention Score operates using rolling windows rather than rescanning the entire history for every tick.
+
+This keeps the per-symbol calculation efficient as the application grows.
+
+---
+
+# 30. Design Philosophy
+
+Several parts of Pulse were intentionally kept simple.
+
+## No Brokerage Integration
+
+The project does not connect to a brokerage account.
+
+Adding brokerage or production market-data integrations would introduce API keys, authentication, vendor limits, and other infrastructure without changing the central product idea.
+
+## No Traditional Authentication
+
+The watchlist-code system provides persistence and cross-device behavior without requiring a full email/password authentication system.
+
+## JSON Persistence
+
+JSON storage is used instead of immediately introducing a production database.
+
+This makes the project easier to understand, run, and demonstrate.
+
+For production scale, a database would be the natural next step.
+
+---
+
+# 31. Optional Demo Mode
+
+Pulse can be forced into simulated-data mode using:
+
+```text
+PULSE_MODE=simulated
+```
+
+This can be useful when:
+
+- A network cannot reach Yahoo Finance
+- Real market data is not required
+- A predictable demo environment is preferred
+
+The rest of the application continues using the same Attention Score, digest, explanation, and insight logic.
+
+---
+
+# 32. Important Note About Market Data
+
+Real market quotes are delayed and can occasionally be unavailable.
+
+Pulse therefore clearly identifies whether a symbol is using:
+
+```text
+Live · Yahoo
+```
+
+or:
+
+```text
+Simulated
+```
+
+The simulated feed is intended for demonstration purposes and should not be interpreted as a real market quote.
+
+---
+
+# Summary
+
+Pulse is a smart watchlist that combines market monitoring with personal thesis tracking.
+
+Its main features are:
+
+1. Attention Score based on unusual market behavior
+2. Plain-English explanations for why a stock deserves attention
+3. Bullish, bearish, and watching investment stances
+4. Thesis tracking
+5. Pending, confirmed, contradicted, and stale thesis states
+6. Devil's Advocate reasoning
+7. AI-generated Devil's Advocate using Ollama
+8. Template-based Devil's Advocate fallback
+9. Real Yahoo Finance market data
+10. Automatic real-to-simulated data fallback
+11. Live, simulated, delayed, conflicting, and closed data indicators
+12. Dual-feed data reconciliation
+13. "Since you last checked" digest
+14. Explicit digest acknowledgment
+15. Thesis changes prioritized in the digest
+16. Sector-level movement detection
+17. Per-symbol sensitivity
+18. Live sparklines
+19. Attention-based watchlist sorting
+20. Cross-device watchlist synchronization
+21. Persistent user state
+22. Per-user write serialization
+23. Focused regression tests
+24. Simple vanilla JavaScript frontend
+25. Clear backend separation
+26. A design that can be scaled toward PostgreSQL, Redis, and production market-data infrastructure
+
+The central idea is simple:
+
+> **Don't just watch the market. Watch what changed, understand why it matters, and notice when reality challenges what you believed.**
