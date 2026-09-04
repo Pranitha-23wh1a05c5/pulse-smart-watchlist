@@ -1,0 +1,14 @@
+{
+  "name": "smart-watchlist-backend",
+  "version": "1.0.0",
+  "description": "Smart Market Watchlist - backend (simulated live feed, meaningful-change engine, digest engine)",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.17.0"
+  }
+}

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pulse — Smart Market Watchlist</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">◆</div>
+        <div>
+          <div class="brand-title">Pulse</div>
+          <div class="brand-sub">The watchlist that tells you what actually matters</div>
+        </div>
+      </div>
+      <div class="session-box">
+        <span class="ws-dot" id="wsDot" title="live feed status"></span>
+        <div id="codeDisplay" class="code-display">—</div>
+        <button class="btn ghost small" id="switchDeviceBtn">Use on another device</button>
+      </div>
+    </header>
+
+    <div id="switchDeviceModal" class="modal hidden">
+      <div class="modal-card">
+        <h3>Sync your watchlist</h3>
+        <p class="muted">Your watchlist code is your key — enter it on any device to pick up right where you left off. No account needed.</p>
+        <div class="code-hero" id="modalCodeDisplay">—</div>
+        <p class="muted small">Or load a different watchlist:</p>
+        <div class="row">
+          <input id="codeInput" placeholder="e.g. SWIFT-FALCON-42" />
+          <button class="btn primary" id="loadCodeBtn">Load</button>
+        </div>
+        <button class="btn ghost small" id="closeModalBtn">Close</button>
+      </div>
+    </div>
+
+    <div id="thesisModal" class="modal hidden">
+      <div class="modal-card">
+        <h3>Why <span id="thesisModalSymbol">this one</span>?</h3>
+        <p class="muted small">One sentence. This is what Pulse will track against reality — and argue against on purpose.</p>
+        <textarea id="thesisText" rows="3" placeholder="e.g. Breaks out above resistance and keeps running into earnings"></textarea>
+        <div class="stance-row">
+          <button class="stance-btn" data-stance="bullish">📈 Bullish</button>
+          <button class="stance-btn" data-stance="neutral">➖ Just watching</button>
+          <button class="stance-btn" data-stance="bearish">📉 Bearish</button>
+        </div>
+        <div class="row">
+          <button class="btn ghost small" id="thesisSkipBtn">Skip — just track the price</button>
+          <button class="btn primary" id="thesisSaveBtn">Add to watchlist</button>
+        </div>
+      </div>
+    </div>
+
+    <main class="layout">
+
+      <section class="status-banner" id="statusBanner">Checking data sources…</section>
+
+      <section class="digest-panel" id="digestPanel">
+        <div class="digest-header">
+          <h2 id="digestTitle">Since you last checked</h2>
+          <button class="btn primary small" id="ackBtn">Mark all reviewed</button>
+        </div>
+        <div id="digestBody" class="digest-body">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </section>
+
+      <section class="insights-row" id="insightsRow"></section>
+
+      <section class="add-row">
+        <input id="symbolSearch" placeholder="Add a symbol… (e.g. NVDA)" autocomplete="off" />
+        <div id="symbolSuggestions" class="suggestions hidden"></div>
+        <div class="sort-controls">
+          <span class="muted small">Sort by</span>
+          <select id="sortSelect">
+            <option value="attention">Attention Score</option>
+            <option value="change">% Change</option>
+            <option value="name">Symbol</option>
+          </select>
+        </div>
+      </section>
+
+      <div class="sorted-by-line muted small" id="sortedByLine"></div>
+      <section id="watchlistGrid" class="grid"></section>
+
+      <section id="emptyWatchlist" class="empty-state hidden">
+        Your watchlist is empty. Search above to add your first symbol.
+      </section>
+
+    </main>
+
+    <footer class="foot">
+      Simulated market data for demo purposes — dual-feed reconciliation, attention scoring and digest logic run live on the backend.
+    </footer>
+
+  </div>
+
+  <template id="cardTemplate">
+    <article class="card">
+      <div class="card-top">
+        <div>
+          <div class="sym-row">
+            <span class="rank-badge"></span>
+            <span class="sym"></span>
+            <span class="badge source"></span>
+            <span class="badge quality"></span>
+          </div>
+          <div class="name muted small"></div>
+        </div>
+        <button class="remove-btn" title="Remove">✕</button>
+      </div>
+      <div class="price-row">
+        <span class="price"></span>
+        <span class="change"></span>
+      </div>
+      <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none"></svg>
+      <div class="attention-row">
+        <div class="attention-bar"><div class="attention-fill"></div></div>
+        <span class="attention-label"></span>
+      </div>
+      <p class="explanation"></p>
+      <div class="thesis-block">
+        <div class="thesis-set">
+          <div class="thesis-header">
+            <span class="thesis-stance-badge"></span>
+            <span class="thesis-status-badge"></span>
+          </div>
+          <p class="thesis-text"></p>
+          <p class="counter-argument"></p>
+          <button class="link-btn edit-thesis-btn">Update your call</button>
+        </div>
+        <div class="thesis-unset">
+          <button class="link-btn add-thesis-btn">+ Add your thesis — what's your call, and why?</button>
+        </div>
+      </div>
+      <div class="card-foot">
+        <span class="muted small sector-tag"></span>
+        <select class="sensitivity-select">
+          <option value="low">Low sensitivity</option>
+          <option value="normal">Normal sensitivity</option>
+          <option value="high">High sensitivity</option>
+        </select>
+      </div>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
