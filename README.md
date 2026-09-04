@@ -1,1 +1,0 @@
-# pulse-smart-watchlist
