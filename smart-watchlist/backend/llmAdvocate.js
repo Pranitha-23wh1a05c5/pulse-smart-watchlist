@@ -25,7 +25,8 @@ const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-2025100
 const TIMEOUT_MS = 12_000;         // local models can be slow on modest hardware
 const CACHE_TTL_MS = 5 * 60_000;   // don't re-hit the LLM on every 25s poll for an unchanged thesis
 
-const cache = new Map(); // key -> { text, ts }
+const cache = new Map();     // key -> { text, ts }
+const inFlight = new Set();  // keys currently being generated, to avoid piling up duplicate requests
 
 function cacheKey(symbol, thesis) {
   return `${symbol}|${thesis.stance}|${thesis.text}`;
@@ -109,32 +110,40 @@ async function callAnthropic(thesis, q) {
 }
 
 /**
- * Returns the LLM-generated counter-argument text, or null if the LLM is
- * disabled, unreachable, too slow, or errored - callers should treat null
- * as "fall back to the template system", not as an error to surface.
+ * Non-blocking: returns the LLM-generated text immediately if it's already
+ * cached and fresh, or null immediately if it isn't - it NEVER makes the
+ * caller wait on network/LLM latency. A null result also kicks off a
+ * background generation (if one for this exact thesis isn't already in
+ * flight) that populates the cache once it completes, so the *next* poll
+ * or refresh picks up the upgraded answer - the page never blocks on an
+ * LLM response, it just quietly upgrades from template to AI-generated a
+ * few seconds later once the model has actually replied.
  */
-async function generateCounterArgument(thesis, q) {
+function getCachedOrKickOff(thesis, q) {
   if (PROVIDER === 'none') return null;
 
   const key = cacheKey(q.symbol, thesis);
   const cached = cache.get(key);
   if (cached && Date.now() - cached.ts < CACHE_TTL_MS) return cached.text;
 
-  try {
-    const text = PROVIDER === 'anthropic' ? await callAnthropic(thesis, q) : await callOllama(thesis, q);
-    cache.set(key, { text, ts: Date.now() });
-    return text;
-  } catch (err) {
-    // Deliberately quiet by default - an unreachable local Ollama is the
-    // expected common case (not installed / not running), not a bug to
-    // spam the logs about on every single request.
-    if (process.env.PULSE_LLM_DEBUG) console.warn(`[llmAdvocate] ${PROVIDER} failed: ${err.message}`);
-    return null;
+  if (!inFlight.has(key)) {
+    inFlight.add(key);
+    const call = PROVIDER === 'anthropic' ? callAnthropic(thesis, q) : callOllama(thesis, q);
+    call
+      .then(text => cache.set(key, { text, ts: Date.now() }))
+      .catch(err => {
+        // Deliberately quiet by default - an unreachable local Ollama is
+        // the expected common case (not installed / not running), not a
+        // bug to spam the logs about on every request.
+        if (process.env.PULSE_LLM_DEBUG) console.warn(`[llmAdvocate] ${PROVIDER} failed: ${err.message}`);
+      })
+      .finally(() => inFlight.delete(key));
   }
+  return null; // not ready yet - caller uses the template for this response
 }
 
 function config() {
   return { provider: PROVIDER, model: PROVIDER === 'anthropic' ? ANTHROPIC_MODEL : OLLAMA_MODEL, host: PROVIDER === 'ollama' ? OLLAMA_HOST : null };
 }
 
-module.exports = { generateCounterArgument, config };
+module.exports = { getCachedOrKickOff, config };

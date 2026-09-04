@@ -206,14 +206,24 @@ function thesisTransitionHeadline(q) {
  * a given sentence, the same way the app is already honest about
  * real-vs-simulated market data.
  */
-async function buildCounterArgument(thesis, q) {
+/**
+ * The actual devil's advocate entry point: try the LLM's cache first (see
+ * llmAdvocate.js - Ollama by default, Anthropic if configured), and fall
+ * back to the deterministic template system if nothing is cached yet, the
+ * LLM is disabled, or it's been erroring out. This is deliberately
+ * NON-BLOCKING - it never waits on a network call, so a click never
+ * inherits Ollama's response time. It just quietly upgrades from template
+ * to AI-generated a poll or two later, once a background generation
+ * (kicked off by llmAdvocate) finishes and lands in the cache.
+ */
+function buildCounterArgument(thesis, q) {
   if (q.dataQuality === 'conflicting') {
     return {
       text: `Sitting this one out — the underlying data is flagged as conflicting right now, and arguing from a number that might be wrong would be worse than not arguing at all.`,
       source: 'template',
     };
   }
-  const llmText = await llmAdvocate.generateCounterArgument(thesis, q);
+  const llmText = llmAdvocate.getCachedOrKickOff(thesis, q);
   if (llmText) return { text: llmText, source: 'llm' };
   return { text: counterArgumentTemplate(thesis, q), source: 'template' };
 }
@@ -221,11 +231,12 @@ async function buildCounterArgument(thesis, q) {
 /**
  * Build the annotated view of a single quote (score + label + explanation),
  * respecting the user's per-symbol sensitivity setting and, if present,
- * their stated thesis for this symbol. Async because generating a thesis's
- * counter-argument may involve an LLM call; quotes with no thesis resolve
- * immediately with no network I/O at all.
+ * their stated thesis for this symbol. Fully synchronous - no network I/O
+ * ever happens inline here (see buildCounterArgument above), which is what
+ * keeps every click and every poll fast regardless of how slow or fast the
+ * configured LLM happens to be.
  */
-async function annotate(q, sensitivity = 'normal', rawThesis = null) {
+function annotate(q, sensitivity = 'normal', rawThesis = null) {
   const mult = SENSITIVITY_MULTIPLIER[sensitivity] || 1;
   let score = attentionScore(q);
 
@@ -238,7 +249,7 @@ async function annotate(q, sensitivity = 'normal', rawThesis = null) {
 
   const adjusted = Math.min(100, Math.round(score * mult));
   const label = classify(adjusted);
-  const built = thesis ? await buildCounterArgument(rawThesis, q) : null;
+  const built = thesis ? buildCounterArgument(rawThesis, q) : null;
 
   return {
     ...q,

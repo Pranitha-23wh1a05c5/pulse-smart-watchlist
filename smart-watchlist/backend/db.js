@@ -93,4 +93,12 @@ function withUserLock(code, fn) {
   return result;
 }
 
-module.exports = { createUser, getUser, saveUser, withUserLock };
+function deleteUser(code) {
+  const existed = Boolean(state.users[code]);
+  delete state.users[code];
+  userLocks.delete(code);
+  persist();
+  return existed;
+}
+
+module.exports = { createUser, getUser, saveUser, deleteUser, withUserLock };

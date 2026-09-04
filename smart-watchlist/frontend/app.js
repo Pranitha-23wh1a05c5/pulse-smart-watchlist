@@ -378,6 +378,24 @@
       localStorage.setItem('pulse_code', code);
       location.reload();
     });
+    el('deleteOtherBtn').addEventListener('click', async () => {
+      const code = el('codeInput').value.trim().toUpperCase();
+      if (!code) return;
+      const sure = confirm(`Permanently delete watchlist ${code}? This cannot be undone.`);
+      if (!sure) return;
+      const res = await fetch(`/api/session?userId=${encodeURIComponent(code)}`, { method: 'DELETE' });
+      if (!res.ok) { alert('Code not found'); return; }
+      const data = await res.json();
+      alert(data.deleted ? `${code} deleted.` : `${code} didn't exist — nothing to delete.`);
+      el('codeInput').value = '';
+    });
+    el('deleteWatchlistBtn').addEventListener('click', async () => {
+      const sure = confirm(`Permanently delete watchlist ${userId}? This removes every symbol, thesis, and setting on it. This cannot be undone.`);
+      if (!sure) return;
+      await fetch(`/api/session?userId=${encodeURIComponent(userId)}`, { method: 'DELETE' });
+      localStorage.removeItem('pulse_code');
+      location.reload();
+    });
   }
 
   // ---------------- thesis modal ----------------

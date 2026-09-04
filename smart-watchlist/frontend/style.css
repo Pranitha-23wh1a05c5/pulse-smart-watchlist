@@ -293,6 +293,8 @@ input:focus, select:focus { outline: 1px solid var(--mint-dim); }
   font-size: 0.78rem; padding: 4px 0; text-align: left;
 }
 .link-btn:hover { text-decoration: underline; }
+.danger-zone { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.link-btn.danger { color: var(--red); font-size: 0.8rem; }
 
 .card-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
 .sensitivity-select { font-size: 0.72rem; padding: 4px 6px; }

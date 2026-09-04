@@ -50,6 +50,14 @@ function publicUser(u) {
   return { userId: u.code, code: u.code, watchlist: u.watchlist, settings: u.settings, lastSeen: u.lastSeen };
 }
 
+// Permanently delete an entire watchlist (all its symbols, theses,
+// settings, and history) - for cleaning up codes created while testing.
+// Irreversible, so the frontend confirms before calling this.
+app.delete('/api/session', requireUser, (req, res) => {
+  const deleted = db.deleteUser(req.user.code);
+  res.json({ deleted });
+});
+
 // ---------- catalog ----------
 
 app.get('/api/symbols', (req, res) => {
