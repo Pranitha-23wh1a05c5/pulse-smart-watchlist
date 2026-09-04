@@ -211,7 +211,7 @@ This helps identify rapid changes that may deserve immediate attention.
 
 ---
 
-# 2. Plain-English Explanations
+# 2. Explanations
 
 Pulse does not only show a number.
 
